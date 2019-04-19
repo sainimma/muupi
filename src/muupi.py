@@ -15,10 +15,10 @@ def parse_args():
                         help='Full name of module under test.')
     parser.add_argument('-p', '--module-path', type=str, default=None,
                         help='The path of source code of module under test.')
-    # parser.add_argument('-t', '--tsmodule-fullname', type=str, default=None,
-    #                     help='Full name of test suite module.')
-    # parser.add_argument('-T', '--tsmodule-path', type=str, default=None,
-    #                     help='The path of source code of test suite module.')
+    parser.add_argument('-t', '--tsmodule-fullname', type=str, default=None,
+                        help='Full name of test suite module.')
+    parser.add_argument('-T', '--tsmodule-path', type=str, default=None,
+                        help='The path of source code of test suite module.')
     parser.add_argument('-g', '--generator', type=str, default=None,
                         help='Specify a generator.')
     parser.add_argument('-P', '--generator-path', type=str, default=None,
@@ -117,97 +117,57 @@ if __name__ == "__main__":
         mutants = MutantGenerator().mutate(module=module_under_test, operators=mutation_operators)
         print "Done.\n"
 
-        if config.generator:
-            # load unittest test suite module
-            if config.generator == "unittest":
-                if suite_module is None:
-                    if config.tsmodule_fullname is None:
-                        print "Specify the fullname of test suite module:"
-                        config.tsmodule_fullname = input()
+        print "Loading test suite module ...... "
+        # todo: DO NOT REMOVE THE FOLLOWING TWO LINES
+        # suite_module_fullname = "sample.unittest_calculator"
+        # suite_module_path = "../sample/unittest_calculator.py"
 
-                    print "Loading test suite module ...... "
-                    # todo: DO NOT REMOVE THE FOLLOWING TWO LINES
-                    # suite_module_fullname = "sample.unittest_calculator"
-                    # suite_module_path = "../sample/unittest_calculator.py"
+        suite_module_fullname = config.tsmodule_fullname
+        suite_module_path = config.tsmodule_path
 
-                    suite_module_fullname = config.tsmodule_fullname
-                    suite_module_path = config.tsmodule_path
+        # Load test suite module
+        suite_module = MuUtilities.load_module(suite_module_fullname, suite_module_path)
+        print "Done.\n"
 
-                    # Load test suite module
-                    suite_module = MuUtilities.load_module(suite_module_fullname, suite_module_path)
-                    print "Done.\n"
+        # run a unit test suite on original sut
+        print "Running unit test cases against target module before mutation ......"
+        tester = MuTester()
+        tester.load_test_suite_module(suite_module)
+        tester.start()
+        test_result = tester.get_result()
+        tester.terminate()
+        print "Test runs: " + str(test_result.testsRun) \
+                + "; failures: " + str(len(test_result.failures)) \
+                + "; errors: " + str(len(test_result.errors))
+        print "Done.\n"
 
-                    # run a unit test suite on original sut
-                    print "Running unit test cases against target module before mutation ......"
-                    tester = MuTester()
-                    tester.load_test_suite_module(suite_module)
-                    tester.start()
-                    test_result = tester.get_result()
-                    tester.terminate()
-                    print "Test runs: " + str(test_result.testsRun) \
-                          + "; failures: " + str(len(test_result.failures)) \
-                          + "; errors: " + str(len(test_result.errors))
-                    print "Done.\n"
+        # if False or len(test_result.failures) > 0 or len(test_result.errors) > 0:
+        #     print "Warning: current module to mutate failed in current unit test."
+        # else:
 
-                    # if False or len(test_result.failures) > 0 or len(test_result.errors) > 0:
-                    #     print "Warning: current module to mutate failed in current unit test."
-                    # else:
+        testers = []
+        for mutant in mutants:
+            tester = MuTester()
+            tester.load_test_suite_module(suite_module)
+            tester.set_mutant_module(mutated_module=mutant, original_module=module_under_test)
+            testers.append(tester)
 
-                    testers = []
-                    for mutant in mutants:
-                        tester = MuTester()
-                        tester.load_test_suite_module(suite_module)
-                        tester.set_mutant_module(mutated_module=mutant, original_module=module_under_test)
-                        testers.append(tester)
+        results = []
+        for tester in testers:
+            tester.start()
+            # results.append(tester.get_result())
+            # tester.terminate()
 
-                    results = []
-                    for tester in testers:
-                        tester.start()
-                        # results.append(tester.get_result())
-                        # tester.terminate()
+        for tester in testers:
+            tester.join()
+            results.append(tester.get_result())
 
-                    for tester in testers:
-                        tester.join()
-                        results.append(tester.get_result())
+        # analyze test results
+        print "Computing mutation score ......"
+        MuAnalyzer.analyze(results)
+        print "Done.\n"
 
-                    # analyze test results
-                    print "Computing mutation score ......"
-                    MuAnalyzer.analyze(results)
-                    print "Done.\n"
-
-                    print "\n\n********** Mutation Test Done! **********\n"
-
-            # load tstl tester
-            else:
-                # todo: load a specified generator, e.g. randomtester, randombeam, bfsmodelchecker, and etc.
-                tester_module = generator_factory(config.generator, config.generator_path)
-
-                if hasattr(tester_module, 'SUT'):
-                    suite_module = getattr(tester_module, 'SUT')
-                else:
-                    print "no SUT module loaded"
-                    exit(1)
-                suite_module_name = config.module_fullname.split('.')[-1]
-                if hasattr(suite_module, suite_module_name):
-                    target_module = getattr(suite_module, suite_module_name)
-                else:
-                    print "no target module loaded"
-                    exit(1)
-
-                if len(mutants) > 0:
-                    workers = []
-                    # replace the original avl module with each mutant
-                    for i in xrange(len(mutants)):
-                        print "Loading mutant_" + str(i) + " ......"
-                        print getattr(suite_module, suite_module_name)
-                        setattr(suite_module, suite_module_name, mutants[i])
-                        print getattr(suite_module, suite_module_name)
-                        print "Done."
-
-                        # todo: create individual process for each tester
-                        # worker = mp.Process(target=tester_module.main)
-
-                print "Done!"
+        print "\n\n********** Mutation Test Done! **********\n"
 
 
 
