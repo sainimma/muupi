@@ -42,18 +42,19 @@ class MutantGenerator(ast.NodeTransformer):
         return original_ast
 
     @timefunc
-    def mutate(self, module, operators):
+    def generate_mutant_asts(self, module, operators):
         """
         Mutate a target module with specified mutation operators
         :param module: the target module to mutate
         :param operators: mutation oeprators
-        :return: a list of mutated modules
+        :return: the original ast and a list of mutated modules along
+            with the operator that modified them
         """
 
         # generate ast from target module
         self.original_ast = self.parse(module)
 
-        mutated_modules = []
+        mutant_asts = []
         config.counter = 0
         with timeblock('Time for mutation loop'):
             for operator in operators:
@@ -81,16 +82,35 @@ class MutantGenerator(ast.NodeTransformer):
                     if not config.mutated:
                         break
 
-                    # generate a mutant module from mutated ast tree
-                    mutated_module = self.generate_mutant_module(self.mutated_ast, operator[1].name()+'_'+operator[0].__name__)
-                    mutated_modules.append(mutated_module)
-
-                    MuUtilities.output(self.original_ast, self.mutated_ast, operator[1].name() + '_' + operator[0].__name__)
+                    mutant_asts.append((deepcopy(self.mutated_ast), operator))
 
                     # recover
                     self.mutated_ast = self.rollback_mutation(self.mutated_ast, operator)
                     # print codegen.to_source(self.mutated_ast)
 
+        return (self.original_ast, mutant_asts)
+    
+    @timefunc
+    def mutate(self, module, operators, output):
+        """
+        Mutate a target module with specified mutation operators
+        :param module: the target module to mutate
+        :param operators: mutation oeprators
+        :param output: boolean indicating whether or not to output the
+            mutated source .py files
+        :return: the mutated modules
+        """
+        _, mutant_asts = self.generate_mutant_asts(module, operators)
+        assert self.original_ast is not None
+
+        mutated_modules = []
+        with timeblock('Time for generating modules'):
+            for (mutant_ast, operator) in mutant_asts:
+                mutated_module = self.generate_mutant_module(mutant_ast, operator[1].name()+'_'+operator[0].__name__)
+                mutated_modules.append(mutated_module)
+
+                if output:
+                    MuUtilities.output(self.original_ast, mutant_ast, operator[1].name() + '_' + operator[0].__name__)
         return mutated_modules
 
     def mutate_bySingleOperator(self, root, operator):
