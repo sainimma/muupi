@@ -1,12 +1,2 @@
-
 *.pyc
-
-*.pyc
-
-*.pyc
-
-*.pyc
-
-*.pyc
-
-.idea/workspace.xml
+src/output/
