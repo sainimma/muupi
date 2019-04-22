@@ -133,9 +133,10 @@ if __name__ == "__main__":
         print "Running unit test cases against target module before mutation ......"
         tester = MuTester()
         tester.load_test_suite_module(suite_module)
-        tester.start()
+        tester.run()
+        # tester.start()
         test_result = tester.get_result()
-        tester.terminate()
+        # tester.terminate()
         print "Test runs: " + str(test_result.testsRun) \
                 + "; failures: " + str(len(test_result.failures)) \
                 + "; errors: " + str(len(test_result.errors))
@@ -154,13 +155,19 @@ if __name__ == "__main__":
 
         results = []
         for tester in testers:
-            tester.start()
+            tester.run()
+            results.append(tester.get_result())
+            # FOR MULTIPROCESSING
+            # tester.start()
+
+            # ORIGINALLY COMMENTED
             # results.append(tester.get_result())
             # tester.terminate()
 
-        for tester in testers:
-            tester.join()
-            results.append(tester.get_result())
+        # FOR MULTIPROCESSING
+        # for tester in testers:
+        #     tester.join()
+        #     results.append(tester.get_result())
 
         # analyze test results
         print "Computing mutation score ......"

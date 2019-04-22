@@ -11,11 +11,8 @@ from MuUtilities import *
 from multiprocessing import Process
 from threading import Thread
 
-
-class MuTester(multiprocessing.Process):
-
+class MuTester():
     def __init__(self):
-        Process.__init__(self)
         self.mutated_module = None
         self.original_module = None
         self.test_suite_module = None
