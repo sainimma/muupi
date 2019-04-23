@@ -25,6 +25,8 @@ def parse_args():
                         help='Specify the path of a generator.')
     parser.add_argument('-l', '--list-generators', action='store_true',
                         help='List all available generators.')
+    parser.add_argument('-c', '--create-files', action='store_true',
+                        default=False, help='Create mutant .py source files')
 
     parser.add_argument('-o', '--mutation-operators', type=str, default=None,
                         help='Specify mutation operators to use.')
@@ -114,63 +116,65 @@ if __name__ == "__main__":
 
         # generate mutants from target module
         print "Generating mutants from target module ...... "
-        mutants = MutantGenerator().mutate(module=module_under_test, operators=mutation_operators)
+        mutants = MutantGenerator().mutate(module=module_under_test, \
+            operators=mutation_operators, output=config.create_files)
         print "Done.\n"
 
-        print "Loading test suite module ...... "
-        # todo: DO NOT REMOVE THE FOLLOWING TWO LINES
-        # suite_module_fullname = "sample.unittest_calculator"
-        # suite_module_path = "../sample/unittest_calculator.py"
+        if config.tsmodule_fullname and config.tsmodule_path:
+            print "Loading test suite module ...... "
+            # todo: DO NOT REMOVE THE FOLLOWING TWO LINES
+            # suite_module_fullname = "sample.unittest_calculator"
+            # suite_module_path = "../sample/unittest_calculator.py
+            suite_module_fullname = config.tsmodule_fullname
+            suite_module_path = config.tsmodule_path
 
-        suite_module_fullname = config.tsmodule_fullname
-        suite_module_path = config.tsmodule_path
+            # Load test suite module
+            suite_module = MuUtilities.load_module(suite_module_fullname, suite_module_path)
+            print "Done.\n"
 
-        # Load test suite module
-        suite_module = MuUtilities.load_module(suite_module_fullname, suite_module_path)
-        print "Done.\n"
-
-        # run a unit test suite on original sut
-        print "Running unit test cases against target module before mutation ......"
-        tester = MuTester()
-        tester.load_test_suite_module(suite_module)
-        tester.start()
-        test_result = tester.get_result()
-        tester.terminate()
-        print "Test runs: " + str(test_result.testsRun) \
-                + "; failures: " + str(len(test_result.failures)) \
-                + "; errors: " + str(len(test_result.errors))
-        print "Done.\n"
-
-        # if False or len(test_result.failures) > 0 or len(test_result.errors) > 0:
-        #     print "Warning: current module to mutate failed in current unit test."
-        # else:
-
-        testers = []
-        for mutant in mutants:
+            # run a unit test suite on original sut
+            print "Running unit test cases against target module before mutation ......"
             tester = MuTester()
             tester.load_test_suite_module(suite_module)
-            tester.set_mutant_module(mutated_module=mutant, original_module=module_under_test)
-            testers.append(tester)
-
-        results = []
-        for tester in testers:
-            tester.start()
-            # results.append(tester.get_result())
+            tester.run()
+            # tester.start()
+            test_result = tester.get_result()
             # tester.terminate()
+            print "Test runs: " + str(test_result.testsRun) \
+                    + "; failures: " + str(len(test_result.failures)) \
+                    + "; errors: " + str(len(test_result.errors))
+            print "Done.\n"
 
-        for tester in testers:
-            tester.join()
-            results.append(tester.get_result())
+            # if False or len(test_result.failures) > 0 or len(test_result.errors) > 0:
+            #     print "Warning: current module to mutate failed in current unit test."
+            # else:
 
-        # analyze test results
-        print "Computing mutation score ......"
-        MuAnalyzer.analyze(results)
-        print "Done.\n"
+            testers = []
+            for mutant in mutants:
+                tester = MuTester()
+                tester.load_test_suite_module(suite_module)
+                tester.set_mutant_module(mutated_module=mutant, original_module=module_under_test)
+                testers.append(tester)
 
-        print "\n\n********** Mutation Test Done! **********\n"
+            results = []
+            for tester in testers:
+                tester.run()
+                results.append(tester.get_result())
+                # FOR MULTIPROCESSING
+                # tester.start()
 
+                # ORIGINALLY COMMENTED
+                # results.append(tester.get_result())
+                # tester.terminate()
 
+            # FOR MULTIPROCESSING
+            # for tester in testers:
+            #     tester.join()
+            #     results.append(tester.get_result())
 
+            # analyze test results
+            print "Computing mutation score ......"
+            MuAnalyzer.analyze(results)
+            print "Done.\n"
 
-
-
+            print "\n\n********** Mutation Test Done! **********\n"
