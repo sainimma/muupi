@@ -176,7 +176,7 @@ if __name__ == "__main__":
                 mutation["mutant_name"] = mutant_module.__name__
                 mutation["mutated_ast_node"] = operator[0].__name__
                 mutation["mutation_operator"] = operator[1].name()
-                mutation["killed"] = False if (len(mutant_killers) == 0) else True
+                mutation["killed"] = False if (mutant_killers) else True
                 mutation["killers"] = mutant_killers
 
             # analyze test results
