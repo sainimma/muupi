@@ -138,10 +138,10 @@ if __name__ == "__main__":
             tester = MuTester()
             tester.load_test_suite_module(suite_module)
             tester.run()
-            unmutated_test_result = tester.get_result()
-            print "Test runs: " + str(unmutated_test_result.testsRun) \
-                    + "; failures: " + str(len(unmutated_test_result.failures)) \
-                    + "; errors: " + str(len(unmutated_test_result.errors))
+            unmutated_test_results = tester.get_result()
+            print "Test runs: " + str(unmutated_test_results.testsRun) \
+                    + "; failures: " + str(len(unmutated_test_results.failures)) \
+                    + "; errors: " + str(len(unmutated_test_results.errors))
             print "Done.\n"
 
             # if False or len(test_result.failures) > 0 or len(test_result.errors) > 0:
@@ -158,8 +158,26 @@ if __name__ == "__main__":
             results = []
             for tester in testers:
                 tester.run()
-                mutated_test_result = tester.get_result()
-                results.append(mutated_test_result)
+                mutated_test_results = tester.get_result()
+                results.append(mutated_test_results)
+
+            # iterate through the test results, and for each mutant extract its
+            # metadata
+            for i in range(len(results)):
+                # Gather all the data about the mutation
+                mutant_module = mutants[i][0]
+                mutant_ast = mutants[i][1]
+                operator = mutants[i][2]
+                mutated_test_results = results[i]
+                # Get the killers for this mutant
+                # An empty list implies no killers
+                mutant_killers = MuAnalyzer.get_mutant_killers(unmutated_test_results, mutated_test_results)
+                mutation = {}
+                mutation["mutant_name"] = mutant_module.__name__
+                mutation["mutated_ast_node"] = operator[0].__name__
+                mutation["mutation_operator"] = operator[1].name()
+                mutation["killed"] = False if (len(mutant_killers) == 0) else True
+                mutation["killers"] = mutant_killers
 
             # analyze test results
             print "Computing mutation score ......"
