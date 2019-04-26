@@ -9,6 +9,7 @@ from MuOperators import StatementDeletion
 
 from timethis import timefunc
 from timethis import timeblock
+import time
 
 class MutantGenerator(ast.NodeTransformer):
     def __init__(self):
@@ -106,11 +107,12 @@ class MutantGenerator(ast.NodeTransformer):
         mutated_modules = []
         with timeblock('Time for generating modules'):
             for (mutant_ast, operator) in mutant_asts:
-                mutated_module = self.generate_mutant_module(mutant_ast, operator[1].name()+'_'+operator[0].__name__)
-                mutated_modules.append(mutated_module)
+                module_name = operator[1].name()+'_'+operator[0].__name__+'_'+ str(int(time.time()))
+                mutated_module = self.generate_mutant_module(mutant_ast, module_name)
+                mutated_modules.append((mutated_module, mutant_ast, operator))
 
                 if output:
-                    MuUtilities.output(self.original_ast, mutant_ast, operator[1].name() + '_' + operator[0].__name__)
+                    MuUtilities.output(self.original_ast, mutant_ast, module_name)
         return mutated_modules
 
     def mutate_bySingleOperator(self, root, operator):
@@ -173,8 +175,8 @@ class MutantGenerator(ast.NodeTransformer):
     def recover_node(self, node):
         if node and config.mutated and config.recovering:
             if node == config.current_mutated_node:
-                if hasattr(node, 'lineno'):
-                    print str(node.lineno)
+                #if hasattr(node, 'lineno'):
+                #    print str(node.lineno)
 
                 original_node = config.node_pairs[node]
 

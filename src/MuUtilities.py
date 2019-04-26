@@ -85,8 +85,7 @@ class MuUtilities(object):
         mutated_code = astor.to_source(node2, add_line_information=True)
         filename = None
         while True:
-            timestamp = str(int(time.time()))
-            filename = operator_name + "_mutant_" + timestamp + ".py"
+            filename = operator_name + "_mutant.py"
             if not os.path.isfile(dest_dir + filename):
                 break
         path = os.path.join(dest_dir, filename)

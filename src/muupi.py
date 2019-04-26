@@ -94,6 +94,7 @@ if __name__ == "__main__":
         module_under_test_path = config.module_path
 
         module_under_test = MuUtilities.load_module(module_under_test_fullname, module_under_test_path)
+        unmutated_ast = MutantGenerator().parse(module_under_test)
         assert module_under_test is not None
         print "Done.\n"
 
@@ -137,12 +138,10 @@ if __name__ == "__main__":
             tester = MuTester()
             tester.load_test_suite_module(suite_module)
             tester.run()
-            # tester.start()
-            test_result = tester.get_result()
-            # tester.terminate()
-            print "Test runs: " + str(test_result.testsRun) \
-                    + "; failures: " + str(len(test_result.failures)) \
-                    + "; errors: " + str(len(test_result.errors))
+            unmutated_test_result = tester.get_result()
+            print "Test runs: " + str(unmutated_test_result.testsRun) \
+                    + "; failures: " + str(len(unmutated_test_result.failures)) \
+                    + "; errors: " + str(len(unmutated_test_result.errors))
             print "Done.\n"
 
             # if False or len(test_result.failures) > 0 or len(test_result.errors) > 0:
@@ -150,27 +149,17 @@ if __name__ == "__main__":
             # else:
 
             testers = []
-            for mutant in mutants:
+            for mutant_module, mutant_ast, operator in mutants:
                 tester = MuTester()
                 tester.load_test_suite_module(suite_module)
-                tester.set_mutant_module(mutated_module=mutant, original_module=module_under_test)
+                tester.set_mutant_module(mutated_module=mutant_module, original_module=module_under_test)
                 testers.append(tester)
 
             results = []
             for tester in testers:
                 tester.run()
-                results.append(tester.get_result())
-                # FOR MULTIPROCESSING
-                # tester.start()
-
-                # ORIGINALLY COMMENTED
-                # results.append(tester.get_result())
-                # tester.terminate()
-
-            # FOR MULTIPROCESSING
-            # for tester in testers:
-            #     tester.join()
-            #     results.append(tester.get_result())
+                mutated_test_result = tester.get_result()
+                results.append(mutated_test_result)
 
             # analyze test results
             print "Computing mutation score ......"
