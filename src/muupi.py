@@ -179,6 +179,12 @@ if __name__ == "__main__":
                 mutation["killed"] = False if (mutant_killers) else True
                 mutation["killers"] = mutant_killers
 
+                lineno = MuAnalyzer.get_lineno(mutant_ast, unmutated_ast)
+                mutation["lineno"] = lineno
+
+                source_output = MuAnalyzer.get_source_output(module_under_test_fullname, module_under_test_path, lineno[0])
+                mutation["source_output"] = source_output
+
             # analyze test results
             print "Computing mutation score ......"
             MuAnalyzer.analyze(results)
