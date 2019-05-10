@@ -105,9 +105,11 @@ class MutantGenerator(ast.NodeTransformer):
         assert self.original_ast is not None
 
         mutated_modules = []
+        mut_num = 0
         with timeblock('Time for generating modules'):
             for (mutant_ast, operator) in mutant_asts:
-                module_name = operator[1].name()+'_'+operator[0].__name__+'_'+ str(int(time.time()))
+                module_name = operator[1].name()+'_'+operator[0].__name__+'_'+ str(mut_num)
+                mut_num += 1
                 mutated_module = self.generate_mutant_module(mutant_ast, module_name)
                 mutated_modules.append((mutated_module, mutant_ast, operator))
 
