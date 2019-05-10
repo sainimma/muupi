@@ -191,8 +191,6 @@ if __name__ == "__main__":
 
                 json_metadata.append(json.dumps(mutation))
 
-                print "done"
-
             # analyze test results
             print "Computing mutation score ......"
             MuAnalyzer.analyze(results)
