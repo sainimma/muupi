@@ -7,7 +7,7 @@ from collections import namedtuple
 
 import multiprocessing as mp
 import argparse
-
+import json
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -161,8 +161,9 @@ if __name__ == "__main__":
                 mutated_test_results = tester.get_result()
                 results.append(mutated_test_results)
 
+            json_metadata = []
             # iterate through the test results, and for each mutant extract its
-            # metadata
+            # metadata and store into JSON object
             for i in range(len(results)):
                 # Gather all the data about the mutation
                 mutant_module = mutants[i][0]
@@ -180,10 +181,17 @@ if __name__ == "__main__":
                 mutation["killers"] = mutant_killers
 
                 lineno = MuAnalyzer.get_lineno(mutant_ast, unmutated_ast)
-                mutation["lineno"] = lineno
+                mutation["lineno"] = lineno[0]
 
-                source_output = MuAnalyzer.get_source_output(module_under_test_fullname, module_under_test_path, lineno[0])
-                mutation["source_output"] = source_output
+                unmutated_output = MuAnalyzer.get_unmutated_output(module_under_test_fullname, module_under_test_path, lineno[0])
+                mutation["unmutated_output"] = str(unmutated_output)
+
+                mutated_line = MuAnalyzer.get_mutated_line(mutant_ast, lineno[0])
+                mutation["mutated_line"] = str(mutated_line)
+
+                json_metadata.append(json.dumps(mutation))
+
+                print "done"
 
             # analyze test results
             print "Computing mutation score ......"

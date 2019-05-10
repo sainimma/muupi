@@ -1,6 +1,8 @@
 from deepdiff import DeepDiff
 from UserString import MutableString
 
+import astor as ast
+
 class MuAnalyzer(object):
 
     @classmethod
@@ -37,7 +39,7 @@ class MuAnalyzer(object):
     
     @classmethod
     def get_lineno(cls, mutant_ast, unmutated_ast):
-        # Perform deep diff comparison (see below for sample output)
+        # Perform deep diff object comparison (see below for sample output)
         ddiff = DeepDiff(mutant_ast, unmutated_ast)
 
         if "type_changes" in ddiff:
@@ -53,16 +55,16 @@ class MuAnalyzer(object):
         elif "values_changed" in ddiff:
             return cls.get_lineno_helper(mutant_ast, ddiff["values_changed"].keys())
         else:
-            raise Exception("MuAnalyzer.get_diff_metadata ERROR: Unhandled DeepDiff Type")
+            raise Exception("MuAnalyzer.get_lineno ERROR: Unhandled DeepDiff Type")
 
     @classmethod
     def get_lineno_helper(cls, mutant_ast, attributes):
-        # List of differing line numbers between the two ASTs (usually just one)
+        # List of differing line numbers between the two ASTs (usually only one)
         lineno = []
 
         for attribute in attributes:
-            # NOTE: Making the attribute path bounds more granular may cause issues
-            # (since not all attributes have a lineno field)
+            # NOTE: Making the extracted attribute path bounds more granular
+            # *may* cause issues (since not all attributes have a lineno field)
             first_dot = attribute.index(".")
             last_dot = attribute.rindex("body") + 7
             
@@ -74,24 +76,33 @@ class MuAnalyzer(object):
                 exec(exec_str, {}, locals_params)
                 lineno.append(locals_params['lineno'])
             except:
-                raise Exception("MuAnalyzer.get_diff_metadata ERROR: Could Not Extract lineno")
+                raise Exception("MuAnalyzer.get_lineno_helper ERROR: Could Not Extract lineno")
         
         return lineno
 
     @classmethod
-    def get_source_output(cls, module_under_test_fullname, module_under_test_path, lineno):
-        DIFF_RANGE = 4
-        source_output = MutableString()
+    def get_unmutated_output(cls, module_under_test_fullname, module_under_test_path, lineno):
+        LINES_BEFORE = 3  # Number of lines before to include
+        LINES_AFTER = 1   # Number of lines after to include
+
+        unmutated_output = MutableString()
 
         fp = open(module_under_test_path + "\\" + module_under_test_fullname + ".py")
         for i, line in enumerate(fp):
-            if i > (lineno + DIFF_RANGE):
+            if i > (lineno + LINES_AFTER):
                 break
-            if i >= (lineno - DIFF_RANGE):
-                source_output += line
+            if i >= (lineno - LINES_BEFORE):
+                unmutated_output += line
 
         fp.close()
-        return source_output
+        return unmutated_output
+    
+    @classmethod
+    def get_mutated_line(cls, mutant_ast, lineno):
+        # NOTE: Converting mutant_ast to source removes blank lines (inside functions) and line comments,
+        # including them in the source file may cuase line number inconsistencies
+        mutant_code = ast.to_source(mutant_ast).split("\n")
+        return mutant_code[lineno - 1]
 
 """
 --------------------
