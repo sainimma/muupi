@@ -3,6 +3,9 @@ from UserString import MutableString
 
 import astor as ast
 
+LINES_BEFORE = 3  # Number of lines before to include
+LINES_AFTER = 1   # Number of lines after to include
+
 class MuAnalyzer(object):
 
     @classmethod
@@ -81,28 +84,14 @@ class MuAnalyzer(object):
         return lineno
 
     @classmethod
-    def get_unmutated_output(cls, module_under_test_fullname, module_under_test_path, lineno):
-        LINES_BEFORE = 3  # Number of lines before to include
-        LINES_AFTER = 1   # Number of lines after to include
-
-        unmutated_output = MutableString()
-
-        fp = open(module_under_test_path + "\\" + module_under_test_fullname + ".py")
-        for i, line in enumerate(fp):
-            if i > (lineno + LINES_AFTER):
-                break
-            if i >= (lineno - LINES_BEFORE):
-                unmutated_output += line
-
-        fp.close()
-        return unmutated_output
-    
-    @classmethod
-    def get_mutated_line(cls, mutant_ast, lineno):
+    def get_lines(cls, source_ast, lineno):
         # NOTE: Converting mutant_ast to source removes blank lines (inside functions) and line comments,
         # including them in the source file may cuase line number inconsistencies
-        mutant_code = ast.to_source(mutant_ast).split("\n")
-        return mutant_code[lineno - 1]
+        # Have to add/subtract 1 at different points to account for zero based indexing
+        code = ast.to_source(source_ast).split("\n")
+        min_line = max(0, lineno - 1 - LINES_BEFORE)
+        max_line = min(len(code), lineno + LINES_AFTER)
+        return "\n".join(code[min_line : max_line]), min_line + 1
 
 """
 --------------------

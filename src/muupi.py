@@ -179,15 +179,22 @@ if __name__ == "__main__":
                 mutation["mutation_operator"] = operator[1].name()
                 mutation["killed"] = False if (mutant_killers) else True
                 mutation["killers"] = mutant_killers
+                mutation["productive"] = False
+                mutation["equivalent"] = False
 
-                lineno = MuAnalyzer.get_lineno(mutant_ast, unmutated_ast)
-                mutation["lineno"] = lineno[0]
+                # Find out exactly which single line was mutated 
+                mutated_lineno = MuAnalyzer.get_lineno(mutant_ast, unmutated_ast)
+                mutation["mutated_lineno"] = mutated_lineno[0]
 
-                unmutated_output = MuAnalyzer.get_unmutated_output(module_under_test_fullname, module_under_test_path, lineno[0])
+                # Get source code for the mutated output as well as the starting line number of the output
+                mutated_output, mutated_output_lineno = MuAnalyzer.get_lines(mutant_ast, mutated_lineno[0])
+                mutation["mutated_output"] = str(mutated_output)
+                mutation["mutated_output_lineno"] = mutated_output_lineno
+
+                # Get source code for the unmutated output as well as the starting line number of the output
+                unmutated_output, unmutated_output_lineno = MuAnalyzer.get_lines(unmutated_ast, mutated_lineno[0])
                 mutation["unmutated_output"] = str(unmutated_output)
-
-                mutated_line = MuAnalyzer.get_mutated_line(mutant_ast, lineno[0])
-                mutation["mutated_line"] = str(mutated_line)
+                mutation["unmutated_output_lineno"] = unmutated_output_lineno
 
                 json_metadata.append(json.dumps(mutation))
 
