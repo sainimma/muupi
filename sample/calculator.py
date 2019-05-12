@@ -1,5 +1,3 @@
-
-
 class Calculator(object):
 
     @classmethod
@@ -46,7 +44,6 @@ class Calculator(object):
             print "unknown exception"
         finally:
             pass
-            #print "finally handler"
 
     @classmethod
     def floorDivAssign(cls, x, y):
@@ -61,20 +58,18 @@ class Calculator(object):
             print "unknown exception"
         finally:
             pass
-            #print "finally handler"
 
     @classmethod
     def sum_all(cls, nums):
         n = len(nums)
         if not(n > 0):  # test COD
             return 0
-
         res = 0  # test CRP for numeric literals
         for i in xrange(n):   # test OIL (for)
             flag = nums[i]==0
             if flag:  # test COI
                 continue
-            # res += nums[i]
+            res += nums[i]
             res = cls.add(res, nums[i])  # FCD
         assert res >= 0
         return res
@@ -183,18 +178,11 @@ class CalculatorTest(object):
         return self.name
 
 
-# def method_name():
-#     print 'this is a method'
-#
-# method_name()
-#
 if __name__ == "__main__":
     res = Calculator.floorDiv(5, 2)
     Calculator.add(5, 5)
     nums = [4, 3, 1, 5, 2, 6]
     Calculator.sum_all(nums)
     print res
-
     sc = ScientificCalculator()
     print sc.add(5, 5)
-

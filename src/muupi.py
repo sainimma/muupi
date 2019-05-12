@@ -7,7 +7,7 @@ from collections import namedtuple
 
 import multiprocessing as mp
 import argparse
-
+import json
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -161,8 +161,9 @@ if __name__ == "__main__":
                 mutated_test_results = tester.get_result()
                 results.append(mutated_test_results)
 
+            json_metadata = []
             # iterate through the test results, and for each mutant extract its
-            # metadata
+            # metadata and store into JSON object
             for i in range(len(results)):
                 # Gather all the data about the mutation
                 mutant_module = mutants[i][0]
@@ -178,6 +179,24 @@ if __name__ == "__main__":
                 mutation["mutation_operator"] = operator[1].name()
                 mutation["killed"] = False if (mutant_killers) else True
                 mutation["killers"] = mutant_killers
+                mutation["productive"] = False
+                mutation["equivalent"] = False
+
+                # Find out exactly which single line was mutated 
+                mutated_lineno = MuAnalyzer.get_lineno(mutant_ast, unmutated_ast)
+                mutation["mutated_lineno"] = mutated_lineno[0]
+
+                # Get source code for the mutated output as well as the starting line number of the output
+                mutated_output, mutated_output_lineno = MuAnalyzer.get_lines(mutant_ast, mutated_lineno[0])
+                mutation["mutated_output"] = str(mutated_output)
+                mutation["mutated_output_lineno"] = mutated_output_lineno
+
+                # Get source code for the unmutated output as well as the starting line number of the output
+                unmutated_output, unmutated_output_lineno = MuAnalyzer.get_lines(unmutated_ast, mutated_lineno[0])
+                mutation["unmutated_output"] = str(unmutated_output)
+                mutation["unmutated_output_lineno"] = unmutated_output_lineno
+
+                json_metadata.append(json.dumps(mutation))
 
             # analyze test results
             print "Computing mutation score ......"
