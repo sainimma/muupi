@@ -108,7 +108,7 @@ class MutantGenerator(ast.NodeTransformer):
         mut_num = 0
         with timeblock('Time for generating modules'):
             for (mutant_ast, operator) in mutant_asts:
-                module_name = operator[1].name()+'_'+operator[0].__name__+'_'+ str(mut_num)
+                module_name = "mutant_" + operator[1].name()+'_'+operator[0].__name__+'_'+ str(mut_num)
                 mut_num += 1
                 mutated_module = self.generate_mutant_module(mutant_ast, module_name)
                 mutated_modules.append((mutated_module, mutant_ast, operator))
@@ -144,8 +144,7 @@ class MutantGenerator(ast.NodeTransformer):
         :param module_shortname: the short name of the module mutated
         :return: an mutated module
         """
-        prefix = "mutant_"
-        mutant_module_shortname = prefix + module_shortname
+        mutant_module_shortname = module_shortname
         mutant_code = compile(mutated_ast, mutant_module_shortname, "exec")
         mutant_module = imp.new_module(mutant_module_shortname)
         try:

@@ -62,7 +62,7 @@ class MuUtilities(object):
         return getattr(module, class_str)
 
     @classmethod
-    def output(cls, node1, node2, operator_name):
+    def output(cls, node1, node2, mutant_name):
         """
         Compare the original source code and mutant.
         :param node1:
@@ -84,14 +84,14 @@ class MuUtilities(object):
         # write the mutated code to a file
         # mutated_code = codegen.to_source(node2)
         mutated_code = astor.to_source(node2, add_line_information=True)
-        filename = operator_name + "_mutant.py"
+        filename = mutant_name + ".py"
         path = os.path.join(dest_dir, filename)
         cls.write_to_file(path, mutated_code)
 
         # write the diff result to a file
         # d = Differ()
         # res = ''.join(list(d.compare(original_code, mutated_code)))
-        # filename = operator_name + "_diff" + ".py"
+        # filename = mutant_name + "_diff" + ".py"
         # path = os.path.join(dest_dir, filename)
         # cls.write_to_file(path, res)
 
