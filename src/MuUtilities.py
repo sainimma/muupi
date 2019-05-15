@@ -7,6 +7,7 @@ import config
 import traceback
 
 import astor
+import json
 
 from MuOperators import *
 from MuTester import *
@@ -99,6 +100,16 @@ class MuUtilities(object):
         with open(filename, 'w') as sourcefile:
             sourcefile.write(text)
         sourcefile.close()
+
+    @classmethod
+    def write_json_output(cls, filename, data):
+        if not os.path.exists(os.path.curdir + '/json_output'):
+            os.mkdir(os.path.curdir + '/json_output')
+        dest_dir = os.path.curdir + '/json_output/'
+        filename = filename + ".json"
+        path = os.path.join(dest_dir, filename)
+        json_output = json.dumps(data, indent=4)
+        cls.write_to_file(path, json_output)
 
     @classmethod
     def print_ast(cls, tree):
