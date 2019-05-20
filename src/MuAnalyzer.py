@@ -3,8 +3,8 @@ from UserString import MutableString
 
 import astor as ast
 
-LINES_BEFORE = 3  # Number of lines before to include
-LINES_AFTER = 1   # Number of lines after to include
+LINES_BEFORE = 5  # Number of lines before to include
+LINES_AFTER = 5   # Number of lines after to include
 
 class MuAnalyzer(object):
 

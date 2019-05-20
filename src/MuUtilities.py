@@ -76,14 +76,14 @@ class MuUtilities(object):
         if not os.path.isfile(dest_dir + 'original.py'):
             # write the original code to a file
             # original_code = codegen.to_source(node1)
-            original_code = astor.to_source(node1, add_line_information=True)
+            original_code = astor.to_source(node1)
             filename = "original.py"
             path = os.path.join(dest_dir, filename)
             cls.write_to_file(path, original_code)
 
         # write the mutated code to a file
         # mutated_code = codegen.to_source(node2)
-        mutated_code = astor.to_source(node2, add_line_information=True)
+        mutated_code = astor.to_source(node2)
         filename = mutant_name + ".py"
         path = os.path.join(dest_dir, filename)
         cls.write_to_file(path, mutated_code)
